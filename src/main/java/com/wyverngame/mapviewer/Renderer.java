@@ -1,10 +1,7 @@
 package com.wyverngame.mapviewer;
 
 import com.wurmonline.mesh.Tiles;
-import com.wyverngame.mapviewer.zone.BridgePart;
-import com.wyverngame.mapviewer.zone.Deed;
-import com.wyverngame.mapviewer.zone.FocusZone;
-import com.wyverngame.mapviewer.zone.Tile;
+import com.wyverngame.mapviewer.zone.*;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -30,6 +27,7 @@ public final class Renderer {
     private int[][] typeData;
     private int[][] metaData;
     private int[][] heightData;
+    private List<HighwayNode> hwNodes;
 
     public Renderer(final Config config) {
         this.bridgeParts = new HashMap<>();
@@ -37,7 +35,7 @@ public final class Renderer {
         this.config = config;
     }
 
-    public int load(final List<Deed> deeds, final Map<Tile, BridgePart> bridgeParts, final List<FocusZone> focusZones) throws IOException {
+    public int load(final List<Deed> deeds, final Map<Tile, BridgePart> bridgeParts, final List<FocusZone> focusZones, final List<HighwayNode> hwNodes) throws IOException {
         this.bridgeParts.putAll(bridgeParts);
         final Path temp = Paths.get("temp");
         if (Files.notExists(temp)) {
@@ -71,6 +69,7 @@ public final class Renderer {
             for (final FocusZone focusZone : focusZones) {
                 focusZone.setHeight(this.heightData[focusZone.getX()][focusZone.getY()]);
             }
+            this.hwNodes = hwNodes;
             return this.size;
         }
     }
@@ -161,6 +160,12 @@ public final class Renderer {
                         pixels[(y * this.size + x)] = part.getColour();
                     }
                 }
+
+                if (type == Type.ROADS) {
+                    for (HighwayNode n: hwNodes) {
+                        pixels[(n.y * this.size + n.x)] = n.c;
+                    }
+                }
             }
         }
 
@@ -241,6 +246,6 @@ public final class Renderer {
     }
 
     public enum Type {
-        NORMAL, FLAT;
+        NORMAL, FLAT, ROADS;
     }
 }

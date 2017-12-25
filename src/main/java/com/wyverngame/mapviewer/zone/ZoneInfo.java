@@ -20,11 +20,13 @@ public final class ZoneInfo {
     private final List<Deed> deeds;
     private final List<FocusZone> focusZones;
     private final Map<Tile, BridgePart> bridgeParts;
+    private final List<HighwayNode> hwNodes;
 
     private ZoneInfo() {
         this.deeds = new ArrayList<>();
         this.focusZones = new ArrayList<>();
         this.bridgeParts = new HashMap<>();
+        this.hwNodes = new ArrayList<>();
     }
 
     public List<Deed> getDeeds() {
@@ -33,6 +35,10 @@ public final class ZoneInfo {
 
     public List<FocusZone> getFocusZones() {
         return this.focusZones;
+    }
+
+    public List<HighwayNode> getHwNodes() {
+        return this.hwNodes;
     }
 
     public Map<Tile, BridgePart> getBridgeParts() {
@@ -56,6 +62,7 @@ public final class ZoneInfo {
         final Map<Tile, BridgePart> bridges = info.getBridgeParts();
         final List<Deed> deeds = info.getDeeds();
         final List<FocusZone> focusZones = info.getFocusZones();
+        final List<HighwayNode> hwNodes = info.getHwNodes();
         final Connection zonesConnection = DriverManager.getConnection("jdbc:sqlite:temp/wurmzones.db");
         final Connection itemsConnection = DriverManager.getConnection("jdbc:sqlite:temp/wurmitems.db");
         ZoneInfo.LOGGER.log(Level.INFO, "Loading bridges");
@@ -105,10 +112,27 @@ public final class ZoneInfo {
             final int type = focusZonesResultSet.getInt("TYPE");
             focusZones.add(new FocusZone(name2, startX2, startY2, endX2, endY2, type));
         }
+        final PreparedStatement highwayItemsStatement = itemsConnection.prepareStatement("SELECT TEMPLATEID,POSX,POSY,AUXDATA FROM ITEMS WHERE TEMPLATEID IN (1114,1112);");
+        final ResultSet highwayItemsResultSet = highwayItemsStatement.executeQuery();
+        while (highwayItemsResultSet.next()) {
+            final int t = highwayItemsResultSet.getInt("TEMPLATEID");
+            final int x = highwayItemsResultSet.getInt("POSX");
+            final int y = highwayItemsResultSet.getInt("POSY");
+            final int a = highwayItemsResultSet.getInt("AUXDATA");
+            if (x > 0 && y > 0 & a != 0) {
+                hwNodes.add(new HighwayNode(x / 4, y / 4, t == 1112 ? HW_WAYSTONE : HW_NODE));
+            }
+        }
+
         itemsConnection.close();
         zonesConnection.close();
         return info;
     }
+
+    private static final int
+            HW_NODE = 0xFF0000,
+            HW_WAYSTONE = 0xFFA500;
+
 
     static {
         LOGGER = Logger.getLogger(ZoneInfo.class.getName());

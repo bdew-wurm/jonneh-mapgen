@@ -258,7 +258,7 @@ function Map(config, deeds, focusZones) {
 			var element = document.createElement("div");
 			var marker = new Marker(deed.x, deed.y, deed.height, element);
 			this.updateMarker(marker);
-			if ((this.mode == "3d" && this.config.showDeedBordersIn3dMode) || (this.mode == "flat" && this.config.showDeedBordersInFlatMode)) {
+			if ((this.mode == "3d" && this.config.showDeedBordersIn3dMode) || (this.mode == "flat" && this.config.showDeedBordersInFlatMode) || (this.mode == "roads" && this.config.showDeedBordersInFlatMode)) {
 				marker.border = document.createElement("div");
 				marker.border.setAttribute("class", "border");
 				marker.deed = deed;
@@ -286,7 +286,7 @@ function Map(config, deeds, focusZones) {
 			var element = document.createElement("div");
 			var marker = new Marker(focusZone.x, focusZone.y, focusZone.height, element);
 			this.updateMarker(marker);
-			if ((this.mode == "3d" && this.config.showDeedBordersIn3dMode) || (this.mode == "flat" && this.config.showDeedBordersInFlatMode)) {
+			if ((this.mode == "3d" && this.config.showDeedBordersIn3dMode) || (this.mode == "flat" && this.config.showDeedBordersInFlatMode) || (this.mode == "roads" && this.config.showDeedBordersInFlatMode)) {
 				marker.border = document.createElement("div");
 				marker.border.setAttribute("class", "border fzb_"+focusZone.type);
 				marker.deed = focusZone;
@@ -318,6 +318,7 @@ config.coords = document.getElementById("coords");
 config.markers = document.getElementById("markers");
 config.toggle3d = document.getElementById("3d");
 config.toggleflat = document.getElementById("flat");
+config.toggleroads = document.getElementById("roads");
 config.searchbox = document.getElementById("searchbox");
 config.searchbutton = document.getElementById("searchbutton");
 config.list = document.getElementById("autocomplete");
@@ -377,6 +378,7 @@ config.toggle3d.addEventListener("click", function(e) {
 
 	config.toggle3d.setAttribute("class", "selected");
 	config.toggleflat.setAttribute("class", "");
+	config.toggleroads.setAttribute("class", "");
 
 	map.mode = "3d";
 	map.load();
@@ -388,11 +390,25 @@ config.toggleflat.addEventListener("click", function(e) {
 
 	config.toggle3d.setAttribute("class", "");
 	config.toggleflat.setAttribute("class", "selected");
+	config.toggleroads.setAttribute("class", "");
 
 	map.mode = "flat";
 	map.load();
 	map.update();
 });
+
+config.toggleroads.addEventListener("click", function(e) {
+	if (map.mode == "roads") return;
+
+	config.toggle3d.setAttribute("class", "");
+	config.toggleflat.setAttribute("class", "");
+	config.toggleroads.setAttribute("class", "selected");
+
+	map.mode = "roads";
+	map.load();
+	map.update();
+});
+
 
 config.searchbox.addEventListener("keyup", function(e) {
 	if (e.keyCode == 13) {

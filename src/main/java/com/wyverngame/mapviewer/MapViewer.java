@@ -36,12 +36,14 @@ public final class MapViewer {
         copyResources(config);
         MapViewer.LOGGER.log(Level.INFO, "Loading map data");
         final ZoneInfo zoneInfo = ZoneInfo.load(config);
-        final int size = renderer.load(zoneInfo.getDeeds(), zoneInfo.getBridgeParts(), zoneInfo.getFocusZones()) / config.getSectionSize();
+        final int size = renderer.load(zoneInfo.getDeeds(), zoneInfo.getBridgeParts(), zoneInfo.getFocusZones(), zoneInfo.getHwNodes()) / config.getSectionSize();
         saveConfig(config.getOutputDirectory(), zoneInfo.getDeeds(), zoneInfo.getFocusZones(), config, size);
         MapViewer.LOGGER.log(Level.INFO, "Saving 3d map");
         renderer.save(config.getOutputDirectory().resolve("sections-3d"), Renderer.Type.NORMAL);
         MapViewer.LOGGER.log(Level.INFO, "Saving flat map");
         renderer.save(config.getOutputDirectory().resolve("sections-flat"), Renderer.Type.FLAT);
+        MapViewer.LOGGER.log(Level.INFO, "Saving road map");
+        renderer.save(config.getOutputDirectory().resolve("sections-roads"), Renderer.Type.ROADS);
         MapViewer.LOGGER.log(Level.INFO, "Done");
     }
 
