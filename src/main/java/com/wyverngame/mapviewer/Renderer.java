@@ -82,7 +82,7 @@ public final class Renderer {
 
         for (int x = 0; x < this.size - 1; x++) {
             if (x % 128 == 0) {
-                LOGGER.log(Level.INFO, "Rendered " + (int) (x / this.size * 100.0F) + "%");
+                LOGGER.log(Level.INFO, String.format("Rendered %.1f%%", 100F * x / this.size));
             }
 
             for (int y = 0; y < this.size - 1; y++) {
@@ -160,12 +160,12 @@ public final class Renderer {
                         pixels[(y * this.size + x)] = part.getColour();
                     }
                 }
+            }
+        }
 
-                if (type == Type.ROADS) {
-                    for (HighwayNode n: hwNodes) {
-                        pixels[(n.y * this.size + n.x)] = n.c;
-                    }
-                }
+        if (type == Type.ROADS) {
+            for (HighwayNode n : hwNodes) {
+                pixels[(n.y * this.size + n.x)] = n.c;
             }
         }
 
