@@ -135,7 +135,7 @@ public final class Renderer {
                                 b = r / 5 + 102;
                             }
 
-                            pixels[(qy * this.size + x)] = (r << 16 | g << 8 | b);
+                            if (qy > 0) pixels[(qy * this.size + x)] = (r << 16 | g << 8 | b);
                         }
                 } else {
                     pixels[(y * this.size + x)] = (r << 16 | g << 8 | b);
@@ -152,9 +152,9 @@ public final class Renderer {
                         int ha = y - part.getHeightOffset() / 40;
                         int hb = y - (part.getHeightOffset() + part.getSlope()) / 40;
                         if ((h >= 0) && (h < this.size - 1)) {
-                            if (ha != hb) pixels[((h - 1) * this.size + x)] = part.getColour();
-                            pixels[(h * this.size + x)] = part.getColour();
-                            pixels[((h + 1) * this.size + x)] = part.getShadowColour();
+                            if (ha != hb && h > 0) pixels[((h - 1) * this.size + x)] = part.getColour();
+                            if (h >= 0) pixels[(h * this.size + x)] = part.getColour();
+                            if (h >= -1) pixels[((h + 1) * this.size + x)] = part.getShadowColour();
                         }
                     } else {
                         pixels[(y * this.size + x)] = part.getColour();
