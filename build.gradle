@@ -1,38 +1,25 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
-    }
+plugins {
+    id 'java'
+    id("com.gradleup.shadow") version "8.3.11"
 }
 
-apply plugin: 'java'
-apply plugin: 'com.github.johnrengelman.shadow'
-
 group "net.bdew.wurm"
-version "0.3"
+version "0.4"
 
 repositories {
     mavenCentral()
-    maven { url "http://gotti.no-ip.org/maven/repository" }
+    maven { url "https://gotti.no-ip.org/maven/repository" }
 }
 
 dependencies {
-    compile 'org.gotti.wurmunlimited:common:2182584'
-    compile 'org.xerial:sqlite-jdbc:3.25.2'
+    implementation 'org.gotti.wurmunlimited:common:2182584'
+    implementation 'org.xerial:sqlite-jdbc:3.54.1.0'
+    implementation 'com.google.code.gson:gson:2.15.0'
 }
 
-jar {
-    archiveName "${project.name}.jar"
+shadowJar {
+    archiveClassifier = "";
     manifest {
-        attributes("Main-Class": "com.wyverngame.mapviewer.MapViewer")
-    }
-    dependsOn configurations.runtime
-    from {
-        (configurations.runtime).collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
+        attributes 'Main-Class': 'com.wyverngame.mapviewer.MapViewer'
     }
 }
-
