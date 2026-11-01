@@ -1,12 +1,14 @@
 package com.wyverngame.mapviewer;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.wyverngame.mapviewer.zone.Deed;
 import com.wyverngame.mapviewer.zone.FocusZone;
 import com.wyverngame.mapviewer.zone.ZoneInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +39,7 @@ public final class MapViewer {
         MapViewer.LOGGER.log(Level.INFO, "Loading map data");
         final ZoneInfo zoneInfo = ZoneInfo.load(config);
         final int size = renderer.load(zoneInfo.getDeeds(), zoneInfo.getBridgeParts(), zoneInfo.getFocusZones(), zoneInfo.getHwNodes()) / config.getSectionSize();
-        saveConfig(config.getOutputDirectory(), zoneInfo.getDeeds(), zoneInfo.getFocusZones(), config, size);
+        saveData(config.getOutputDirectory(), zoneInfo.getDeeds(), zoneInfo.getFocusZones(), config, size);
         MapViewer.LOGGER.log(Level.INFO, "Saving 3d map");
         renderer.save(config.getOutputDirectory().resolve("sections-3d"), Renderer.Type.NORMAL);
         MapViewer.LOGGER.log(Level.INFO, "Saving flat map");
@@ -62,8 +64,8 @@ public final class MapViewer {
         }
     }
 
-    private static void saveConfig(final Path path, final List<Deed> deeds, final List<FocusZone> focusZones, final Config config, final int size) throws IOException {
-        MapViewer.LOGGER.log(Level.INFO, "Saving config file");
+    private static void saveData(final Path path, final List<Deed> deeds, final List<FocusZone> focusZones, final Config config, final int size) throws IOException {
+        MapViewer.LOGGER.log(Level.INFO, "Saving map data");
         int x;
         int y = x = size * config.getSectionSize() / 2;
         for (final Deed deed : deeds) {
@@ -76,52 +78,55 @@ public final class MapViewer {
         if (Files.notExists(path)) {
             Files.createDirectory(path, (FileAttribute<?>[]) new FileAttribute[0]);
         }
-        try (final OutputStream out = Files.newOutputStream(path.resolve("config.js"))) {
-            out.write("function Config() {}\n".getBytes(StandardCharsets.UTF_8));
-            out.write("var config = new Config();\n".getBytes(StandardCharsets.UTF_8));
-            out.write(("config.size = " + size + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write(("config.step = " + config.getSectionSize() + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write(("config.x = " + x + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write(("config.y = " + y + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write("config.mode = \"3d\";\n".getBytes(StandardCharsets.UTF_8));
-            out.write(("config.showDeedBordersIn3dMode = " + config.showDeedBorders3d() + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write(("config.showDeedBordersInFlatMode = " + config.showDeedBordersFlat() + ";\n").getBytes(StandardCharsets.UTF_8));
-            out.write("\n".getBytes(StandardCharsets.UTF_8));
-            out.write("function Deed(name, x, y, height, permanent, sx, sy, ex, ey) {\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.name = name;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.x = x;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.y = y;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.sx = sx;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.sy = sy;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.ex = ex;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.ey = ey;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.height = height;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.permanent = permanent;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("}\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\n".getBytes(StandardCharsets.UTF_8));
-            out.write("function FocusZone(name, x, y, height, type, sx, sy, ex, ey) {\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.name = name;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.x = x;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.y = y;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.sx = sx;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.sy = sy;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.ex = ex;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.ey = ey;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.height = height;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\tthis.type = type;\n".getBytes(StandardCharsets.UTF_8));
-            out.write("}\n".getBytes(StandardCharsets.UTF_8));
-            out.write("\n".getBytes(StandardCharsets.UTF_8));
-            out.write("var deeds = [];\n".getBytes(StandardCharsets.UTF_8));
-            out.write("var focusZones = [];\n".getBytes(StandardCharsets.UTF_8));
-            if (config.showDeeds()) {
-                for (final Deed deed2 : deeds) {
-                    out.write(("deeds.push(new Deed('" + deed2.getName().replace("'", "\\'") + "', " + deed2.getX() + ", " + deed2.getY() + ", " + deed2.getHeight() + ", " + deed2.isPermanent() + ", " + deed2.getSx() + ", " + deed2.getSy() + ", " + deed2.getEx() + ", " + deed2.getEy() + "));\n").getBytes(StandardCharsets.UTF_8));
-                }
-                for (final FocusZone focusZone : focusZones) {
-                    out.write(("focusZones.push(new FocusZone('" + focusZone.getName().replace("'", "\\'") + "', " + focusZone.getX() + ", " + focusZone.getY() + ", " + focusZone.getHeight() + ", " + focusZone.getType() + ", " + focusZone.getSx() + ", " + focusZone.getSy() + ", " + focusZone.getEx() + ", " + focusZone.getEy() + "));\n").getBytes(StandardCharsets.UTF_8));
-                }
-            }
+        final JsonObject data = new JsonObject();
+        final JsonObject mapConfig = new JsonObject();
+        mapConfig.addProperty("size", size);
+        mapConfig.addProperty("step", config.getSectionSize());
+        mapConfig.addProperty("x", x);
+        mapConfig.addProperty("y", y);
+        mapConfig.addProperty("mode", "3d");
+        mapConfig.addProperty("showDeedBordersIn3dMode", config.showDeedBorders3d());
+        mapConfig.addProperty("showDeedBordersInFlatMode", config.showDeedBordersFlat());
+        data.add("config", mapConfig);
+
+        final JsonArray deedData = new JsonArray();
+        final JsonArray focusZoneData = new JsonArray();
+        if (config.showDeeds()) {
+            deeds.stream().map(MapViewer::buildDeed).forEach(deedData::add);
+            focusZones.stream().map(MapViewer::buildFocusZone).forEach(focusZoneData::add);
         }
+        data.add("deeds", deedData);
+        data.add("focusZones", focusZoneData);
+        final byte[] json = new Gson().toJson(data).getBytes(StandardCharsets.UTF_8);
+        Files.write(path.resolve("config.json"), json);
+    }
+
+    private static JsonObject buildDeed(Deed deed) {
+        final JsonObject deedObject = new JsonObject();
+        deedObject.addProperty("name", deed.getName());
+        deedObject.addProperty("x", deed.getX());
+        deedObject.addProperty("y", deed.getY());
+        deedObject.addProperty("height", deed.getHeight());
+        deedObject.addProperty("permanent", deed.isPermanent());
+        deedObject.addProperty("sx", deed.getSx());
+        deedObject.addProperty("sy", deed.getSy());
+        deedObject.addProperty("ex", deed.getEx());
+        deedObject.addProperty("ey", deed.getEy());
+        return deedObject;
+    }
+
+    private static JsonObject buildFocusZone(FocusZone focusZone) {
+        final JsonObject focusZoneObject = new JsonObject();
+        focusZoneObject.addProperty("name", focusZone.getName());
+        focusZoneObject.addProperty("x", focusZone.getX());
+        focusZoneObject.addProperty("y", focusZone.getY());
+        focusZoneObject.addProperty("height", focusZone.getHeight());
+        focusZoneObject.addProperty("type", focusZone.getType());
+        focusZoneObject.addProperty("sx", focusZone.getSx());
+        focusZoneObject.addProperty("sy", focusZone.getSy());
+        focusZoneObject.addProperty("ex", focusZone.getEx());
+        focusZoneObject.addProperty("ey", focusZone.getEy());
+        return focusZoneObject;
     }
 
     static {
